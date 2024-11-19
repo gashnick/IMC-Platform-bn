@@ -16,6 +16,6 @@ export function generateOpenAPIDocument() {
     externalDocs: {
       description: "View the raw OpenAPI Specification in JSON format",
       url: "/swagger.json",
-    },
+    }
   });
 }

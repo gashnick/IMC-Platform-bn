@@ -6,9 +6,20 @@ import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { GetUserSchema, UserSchema } from "@/api/users/userModel";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { userController } from "./userController";
+import passport from "passport";
 
 export const userRegistry = new OpenAPIRegistry();
 export const userRouter: Router = express.Router();
+
+userRegistry.registerComponent(
+    'securitySchemes', 
+    'bearerAuth', 
+    {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT'
+    }
+);
 
 userRegistry.register("User", UserSchema);
 
@@ -17,10 +28,11 @@ userRegistry.registerPath({
     method: "get",
     path: "/users",
     tags: ["Users"],
+    security:[{ bearerAuth: [] }],
     responses: createApiResponse(z.array(UserSchema), "Success"),
 });
 
-userRouter.get("/", userController.getUsers);
+userRouter.get("/",passport.authenticate("jwt", { session: false }), userController.getUsers);
 
 //GET ONE
 userRegistry.registerPath({

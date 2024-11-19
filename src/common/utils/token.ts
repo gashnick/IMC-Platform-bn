@@ -8,12 +8,12 @@ export const attachToken = (user: User)=>{
     }
 
     //create jwt token
-    const token = jwt.sign({id: user.id}, process.env.JWT_SECRET, {
+    const token = jwt.sign({ sub: user.id, iat: Date.now() }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_TIME
     });
 
     return {
         token,
-        user
+        ...user
     };
 }

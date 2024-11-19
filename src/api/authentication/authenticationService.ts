@@ -1,50 +1,56 @@
 import { StatusCodes } from "http-status-codes";
 import type { User } from "@/api/users/userModel";
-import { UserRepository } from "@/api/users/userRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 import prisma from "@/common/utils/prisma";
+import { comparePassword } from "@/common/utils/bcrypt";
+import { attachToken } from "@/common/utils/token";
 
 export class AuthenticationService {
-    private userRepository: UserRepository;
 
-    constructor(repository: UserRepository = new UserRepository()) {
-        this.userRepository = repository;
-    }
-
-    // Retrieves all users from the database
+    // Register new users
     async createUser(body: User): Promise<ServiceResponse<User | null>> {
         try {
-            const user = await prisma.user.create({
-                data: body
-            })
+            const user = await prisma.user.create({ data: body })
 
-            return ServiceResponse.success<User>("Users found", user);
+            return ServiceResponse.success<User>("Users registered successful!", attachToken(user));
 
         } catch (ex) {
-            const errorMessage = `Error creating user: $${(ex as Error).message}`;
+            const errorMessage = `Error registering user: $${(ex as Error).message}`;
             logger.error(errorMessage);
             console.log(ex)
             return ServiceResponse.failure(
-                "An error occurred while adding user.",
+                "An error occurred while registering user.",
                 null,
                 StatusCodes.INTERNAL_SERVER_ERROR,
             );
         }
     }
 
-    // Retrieves a single user by their ID
-    async findById(id: number): Promise<ServiceResponse<User | null>> {
+    // Signin users
+    async creadentialLogin(email: string, password: string): Promise<ServiceResponse<User | null>> {
         try {
-            const user = await this.userRepository.findByIdAsync(id);
-            if (!user) {
-            return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
-            }
-            return ServiceResponse.success<User>("User found", user);
-        } catch (ex) {
-            const errorMessage = `Error finding user with id ${id}:, ${(ex as Error).message}`;
+            const user = await prisma.user.findUnique({
+                where: { email: email}
+            });
+    
+            if(!user)
+                return ServiceResponse.failure("Invalid email or Password!", null, StatusCodes.UNPROCESSABLE_ENTITY);
+    
+    
+            // check if password match also
+            const isMatch = await comparePassword(password, user.password!);
+            
+            if(!isMatch)
+                return ServiceResponse.failure("Invalid email or Password!", null, StatusCodes.UNPROCESSABLE_ENTITY);
+    
+            
+            return ServiceResponse.success<User>("User Log IN successful!", attachToken(user));
+
+        } catch (error) {
+            const errorMessage = `Error Logging in USER:, ${(error as Error).message}`;
             logger.error(errorMessage);
-            return ServiceResponse.failure("An error occurred while finding user.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+            return ServiceResponse.failure("An error occurred while trying to login.", null, StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
 }

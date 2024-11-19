@@ -10,9 +10,8 @@ import errorHandler from "@/common/middleware/errorHandler";
 import rateLimiter from "@/common/middleware/rateLimiter";
 import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
-import prisma from "./common/utils/prisma";
 import passport from "passport";
-import "@/common/utils/local-strategy";
+import { jwtAuthMiddleware } from "@/common/middleware/passport"
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -26,20 +25,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(helmet());
 app.use(rateLimiter);
+app.use(passport.initialize())
+jwtAuthMiddleware(passport)
 
 // Request logging
 app.use(requestLogger);
-app.use(passport.initialize())
 
-
-app.get("/get-users", async(req,res)=>{
-    const users = await prisma.user.findMany();
-
-    res.status(200).json({
-        status: "success",
-        users
-    })
-})
 
 // Routes
 app.use("/", authenticationRouters);

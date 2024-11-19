@@ -8,6 +8,7 @@ import { handleServiceResponse } from "@/common/utils/httpHandlers";
 import { aunthenticationController } from "./authenticationController";
 import { UserSchema } from "../users/userModel";
 import { StatusCodes } from "http-status-codes";
+import passport from "passport";
 
 export const regiserRegistry = new OpenAPIRegistry();
 export const authenticationRouters: Router = express.Router();
@@ -17,23 +18,35 @@ regiserRegistry.registerPath({
     method: "post",
     path: "/register",
     request: {
-        body: createApiReqestBody(UserSchema)
+        body: createApiReqestBody(UserSchema.omit({ id: true }))
     }, 
     tags: ["Authentication"],
     responses: createApiResponse(UserSchema, "User registered successfully", StatusCodes.OK),
 });
-
 authenticationRouters.post("/register",  aunthenticationController.registerUser);
 
-//LOGIN
+//LOGIN WITH CREDENTIALS
 regiserRegistry.registerPath({
     method: "post",
-    path: "/login",
+    path: "/credentialsLogin",
     tags: ["Authentication"],
-    responses: createApiResponse(z.null(), "Success"),
+    request: {
+        body: createApiReqestBody(UserSchema.omit({ id: true,name: true }))
+    }, 
+    responses: createApiResponse(UserSchema, "Success"),
 });
 
-authenticationRouters.post("/login", (_req: Request, res: Response) => {
-    const serviceResponse = ServiceResponse.success("Service is healthy", null);
-    return handleServiceResponse(serviceResponse, res);
+authenticationRouters.post("/credentialsLogin", aunthenticationController.loginUser);
+
+//LOGIN WITH GOOGLE
+regiserRegistry.registerPath({
+    method: "post",
+    path: "/googleLogin",
+    tags: ["Authentication"],
+    request: {
+        body: createApiReqestBody(UserSchema.omit({ id: true,name: true }))
+    }, 
+    responses: createApiResponse(UserSchema, "Success"),
 });
+
+authenticationRouters.post("/googleLogin", aunthenticationController.loginUser);
