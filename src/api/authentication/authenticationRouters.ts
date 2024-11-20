@@ -40,13 +40,33 @@ authenticationRouters.post("/credentialsLogin", aunthenticationController.loginU
 
 //LOGIN WITH GOOGLE
 regiserRegistry.registerPath({
-    method: "post",
+    method: "get",
     path: "/googleLogin",
     tags: ["Authentication"],
-    request: {
-        body: createApiReqestBody(UserSchema.omit({ id: true,name: true }))
-    }, 
     responses: createApiResponse(UserSchema, "Success"),
 });
 
-authenticationRouters.post("/googleLogin", aunthenticationController.loginUser);
+authenticationRouters.get("/googleLogin", passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "select_account",
+}));
+
+regiserRegistry.registerPath({
+    method: "get",
+    path: "/auth/google/redirect",
+    tags: ["Authentication"], 
+    responses: createApiResponse(UserSchema, "Success"),
+});
+
+authenticationRouters.get("/auth/google/redirect",  passport.authenticate("google"), 
+                                            aunthenticationController.googleLogin );
+
+regiserRegistry.registerPath({
+    method: "delete",
+    path: "/googleLogout",
+    tags: ["Authentication"], 
+    responses: createApiResponse(UserSchema, "Success"),
+});
+
+authenticationRouters.delete("/googleLogout",  passport.authenticate("google"), 
+                                                        aunthenticationController.googleLogout );

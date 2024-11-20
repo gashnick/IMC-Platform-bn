@@ -11,7 +11,9 @@ import rateLimiter from "@/common/middleware/rateLimiter";
 import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
 import passport from "passport";
-import { jwtAuthMiddleware } from "@/common/middleware/passport"
+import { jwtAuthMiddleware } from "@/common/middleware/passport";
+import session from "express-session";
+import { googleAuthStrategy } from "@/common/middleware/passport";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -25,8 +27,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(helmet());
 app.use(rateLimiter);
+
+// Configure session middleware
+app.use(
+    session({
+      secret: process.env.SESSION_SECRET || "",
+      resave: false,
+      saveUninitialized: true,
+    })
+);
+
 app.use(passport.initialize())
+app.use(passport.session());
+
+//Set UP strategies
 jwtAuthMiddleware(passport)
+googleAuthStrategy(passport)
 
 // Request logging
 app.use(requestLogger);

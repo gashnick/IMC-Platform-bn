@@ -2,6 +2,9 @@ import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions, VerifyCallback } 
 import { Strategy as GoogleStrategy, StrategyOptions as GoogleOptions } from "passport-google-oauth20";
 import { PassportStatic } from "passport";
 import prisma from "@/common/utils/prisma";
+import { User } from "@prisma/client";
+import { logger } from "@/server";
+import { Request, Response, NextFunction } from "express";
 
 export const jwtAuthMiddleware = async(passport: PassportStatic)=> {
     if(!process.env.JWT_SECRET)
@@ -36,14 +39,43 @@ export const googleAuthStrategy = async(passport: PassportStatic)=> {
     const googleOptions: GoogleOptions = {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "/auth/google/redirect"
+        callbackURL: "/auth/google/redirect",
+        
     }
+
     const strategy = new GoogleStrategy( googleOptions,
-        function(accessToken, refreshToken, profile, cb) {
-            // User.findOrCreate({ googleId: profile.id }, function (err, user) {
-            // return cb(err, user);
-            // });
+        async function(accessToken, refreshToken, profile, cb) {
+            try {
+                const user = await prisma.user.upsert({
+                    where: { googleId: profile.id, email: profile?.emails?.[0].value },
+                    update: {
+                        googleId: profile.id
+                    },
+                    create: {
+                        email: profile?.emails?.[0].value || "bivakumana@gmail.com",
+                        name: Object.values(profile.name || {}).join(" "),
+                        googleId: profile.id,
+                    }
+                })
+                return cb(null, user)
+
+            } catch (error) {
+                logger.error(error, `Google Strategy Error Occured: ${ (error as Error).message }`)
+                return cb(error, false)
+            }
         }
     )
+
+    passport.serializeUser((user, done)=> {
+        done(null, (user as User).id)
+    })
+
+    passport.deserializeUser(async(id, done)=>{
+        prisma.user.findUnique({ where: { id: id as string }}).then((value)=> {
+            done(null, value)
+        })
+    })
+
+    passport.use(strategy)
 }
 
