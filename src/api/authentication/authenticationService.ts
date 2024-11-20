@@ -1,24 +1,28 @@
 import { StatusCodes } from "http-status-codes";
-import type { User } from "@/api/users/userModel";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 import prisma from "@/common/utils/prisma";
 import { comparePassword } from "@/common/utils/bcrypt";
 import { attachToken } from "@/common/utils/token";
+import { User } from "../users/userModel";
 
 export class AuthenticationService {
 
     // Register new users
     async createUser(body: User): Promise<ServiceResponse<User | null>> {
         try {
-            const user = await prisma.user.create({ data: body })
+            const user = await prisma.user.create({ 
+                data: body,
+                omit: {
+                    password: true
+                }
+            })
 
             return ServiceResponse.success<User>("Users registered successful!", attachToken(user));
 
         } catch (ex) {
             const errorMessage = `Error registering user: $${(ex as Error).message}`;
             logger.error(errorMessage);
-            console.log(ex)
             return ServiceResponse.failure(
                 "An error occurred while registering user.",
                 null,
@@ -31,7 +35,7 @@ export class AuthenticationService {
     async creadentialLogin(email: string, password: string): Promise<ServiceResponse<User | null>> {
         try {
             const user = await prisma.user.findUnique({
-                where: { email: email}
+                where: { email: email},
             });
     
             if(!user)
@@ -45,7 +49,12 @@ export class AuthenticationService {
                 return ServiceResponse.failure("Invalid email or Password!", null, StatusCodes.UNPROCESSABLE_ENTITY);
     
             
-            return ServiceResponse.success<User>("User Log IN successful!", attachToken(user));
+            return  ServiceResponse.success<User>("User Log IN successful!", attachToken({
+                        name: user.name,
+                        email: user.email,
+                        id: user.id,
+                        createdAt: user.createdAt
+                    }));
 
         } catch (error) {
             const errorMessage = `Error Logging in USER:, ${(error as Error).message}`;

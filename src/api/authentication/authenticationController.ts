@@ -10,7 +10,7 @@ class AuthenticationController {
 
         const hashedPassword = await getHash(_req.body.password);
 
-        const user: User = {
+        const user = {
             name: _req.body.name,
             email: _req.body.email,
             password: hashedPassword

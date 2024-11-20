@@ -1,5 +1,5 @@
-import { User } from "@prisma/client";
-import jwt from "jsonwebtoken"
+import { User } from "@/api/users/userModel";
+import jwt from "jsonwebtoken";
 
 export const attachToken = (user: User)=>{
 

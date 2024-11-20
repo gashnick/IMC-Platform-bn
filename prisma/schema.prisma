@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js" // Generates the Prisma Client
-  previewFeatures = ["driverAdapters"]
+  previewFeatures = ["driverAdapters", "omitApi"]
 }
 
 datasource db {
@@ -9,8 +9,9 @@ datasource db {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
+  id        String     @id @default(uuid())
+  email     String     @unique
   name      String
-  password  String
+  password  String?
+  createdAt DateTime @default(now())
 }
