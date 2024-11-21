@@ -64,6 +64,13 @@ class AuthenticationController {
 
             return handleServiceResponse(logoutService, res);
     };
+
+    public forgotPassword: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+
+            const logoutService = await authenticationService.logoutUser();
+
+            return handleServiceResponse(logoutService, res);
+    };
 }
 
 export const aunthenticationController = new AuthenticationController();

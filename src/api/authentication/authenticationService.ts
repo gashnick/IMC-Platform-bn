@@ -3,7 +3,7 @@ import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 import prisma from "@/common/utils/prisma";
 import { comparePassword } from "@/common/utils/bcrypt";
-import { attachToken } from "@/common/utils/token";
+import { attachToken, signToken } from "@/common/utils/token";
 import { User } from "../users/userModel";
 
 export class AuthenticationService {
@@ -65,6 +65,27 @@ export class AuthenticationService {
 
     async logoutUser():Promise<ServiceResponse<User | null>>{
         try {
+            return ServiceResponse.success("User Logout successful!", null, StatusCodes.OK);
+        } catch (error) {
+            return ServiceResponse.failure("User Logout Failed!", null, StatusCodes.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    async forgotPasswordService(email: string):Promise<ServiceResponse<User | null>>{
+        try {
+             //getting user information
+            const user = await prisma.user.findUnique({where: { email }});
+
+            if(!user){
+                return ServiceResponse.failure("Provided User Email Doesn't match Any in Database", null,StatusCodes.NOT_FOUND);
+            }
+
+            //Generate Reset Codes
+            const resetToken = signToken(user.id);
+
+            // tobe continued!!
+
+            //generate reset link
             return ServiceResponse.success("User Logout successful!", null, StatusCodes.OK);
         } catch (error) {
             return ServiceResponse.failure("User Logout Failed!", null, StatusCodes.UNPROCESSABLE_ENTITY);
