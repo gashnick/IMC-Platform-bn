@@ -18,7 +18,7 @@ regiserRegistry.registerPath({
     method: "post",
     path: "/register",
     request: {
-        body: createApiReqestBody(UserSchema.omit({ id: true }))
+        body: createApiReqestBody(UserSchema.omit({ id: true, createdAt: true }))
     }, 
     tags: ["Authentication"],
     responses: createApiResponse(UserSchema, "User registered successfully", StatusCodes.OK),
@@ -31,7 +31,7 @@ regiserRegistry.registerPath({
     path: "/credentialsLogin",
     tags: ["Authentication"],
     request: {
-        body: createApiReqestBody(UserSchema.omit({ id: true,name: true }))
+        body: createApiReqestBody(UserSchema.omit({ id: true,name: true, createdAt: true }))
     }, 
     responses: createApiResponse(UserSchema, "Success"),
 });
@@ -58,15 +58,15 @@ regiserRegistry.registerPath({
     responses: createApiResponse(UserSchema, "Success"),
 });
 
-authenticationRouters.get("/auth/google/redirect",  passport.authenticate("google"), 
-                                            aunthenticationController.googleLogin );
+authenticationRouters.get("/auth/google/redirect",  
+                            passport.authenticate("google"), 
+                                aunthenticationController.googleLogin);
 
 regiserRegistry.registerPath({
     method: "delete",
-    path: "/googleLogout",
+    path: "/logout",
     tags: ["Authentication"], 
     responses: createApiResponse(UserSchema, "Success"),
 });
 
-authenticationRouters.delete("/googleLogout",  passport.authenticate("google"), 
-                                                        aunthenticationController.googleLogout );
+authenticationRouters.delete("/logout", aunthenticationController.userLogout);

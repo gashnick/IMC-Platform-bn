@@ -13,11 +13,11 @@ export const userRouter: Router = express.Router();
 
 userRegistry.registerComponent(
     'securitySchemes', 
-    'bearerAuth', 
+    'CookieAuth', 
     {
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT'
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'auth_token'
     }
 );
 
@@ -28,11 +28,22 @@ userRegistry.registerPath({
     method: "get",
     path: "/users",
     tags: ["Users"],
-    security:[{ bearerAuth: [] }],
+    security:[{ CookieAuth: [] }],
     responses: createApiResponse(z.array(UserSchema), "Success"),
 });
 
-userRouter.get("/",passport.authenticate("jwt", { session: false }), userController.getUsers);
+userRouter.get("/", passport.authenticate("jwt", { session: false }), userController.getUsers);
+
+//GET LOGGED USER PROFILE
+userRegistry.registerPath({
+    method: "get",
+    path: "/users/profile",
+    tags: ["Users"],
+    security:[{ CookieAuth: [] }],
+    responses: createApiResponse(UserSchema, "Success"),
+});
+
+userRouter.get("/profile", passport.authenticate("jwt", { session: false }), userController.getProfile);
 
 //GET ONE
 userRegistry.registerPath({

@@ -14,6 +14,7 @@ import passport from "passport";
 import { jwtAuthMiddleware } from "@/common/middleware/passport";
 import session from "express-session";
 import { googleAuthStrategy } from "@/common/middleware/passport";
+import cookieParser from "cookie-parser";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -24,11 +25,13 @@ app.set("trust proxy", true);
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true })); //env.CORS_ORIGIN, credentials: true
 app.use(helmet());
 app.use(rateLimiter);
 
 // Configure session middleware
+app.use(cookieParser(process.env.SESSION_SECRET || ""))
+
 app.use(
     session({
       secret: process.env.SESSION_SECRET || "",
@@ -56,6 +59,6 @@ app.use("/users", userRouter);
 app.use(openAPIRouter);
 
 // Error handlers
-app.use(errorHandler());
+// app.use(errorHandler());
 
 export { app, logger };

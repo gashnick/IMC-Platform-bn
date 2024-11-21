@@ -4,14 +4,23 @@ import { PassportStatic } from "passport";
 import prisma from "@/common/utils/prisma";
 import { User } from "@prisma/client";
 import { logger } from "@/server";
-import { Request, Response, NextFunction } from "express";
+import { Request } from "express";
+
+let cookieExtractor = function(req: Request) {
+    let token = null;
+
+    if (req && req.cookies) {
+        token = req.cookies['auth_token'];
+    }
+    return token;
+};
 
 export const jwtAuthMiddleware = async(passport: PassportStatic)=> {
     if(!process.env.JWT_SECRET)
         return new Error("Required environment JWT_SECRET is missing!")
 
     const options: StrategyOptions = {
-        jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+        jwtFromRequest: cookieExtractor,
         secretOrKey: process.env.JWT_SECRET
     }
 
@@ -47,7 +56,7 @@ export const googleAuthStrategy = async(passport: PassportStatic)=> {
         async function(accessToken, refreshToken, profile, cb) {
             try {
                 const user = await prisma.user.upsert({
-                    where: { googleId: profile.id, email: profile?.emails?.[0].value },
+                    where: { email: profile?.emails?.[0].value },
                     update: {
                         googleId: profile.id
                     },
@@ -55,7 +64,8 @@ export const googleAuthStrategy = async(passport: PassportStatic)=> {
                         email: profile?.emails?.[0].value || "bivakumana@gmail.com",
                         name: Object.values(profile.name || {}).join(" "),
                         googleId: profile.id,
-                    }
+                    },
+                    omit: { password: true }
                 })
                 return cb(null, user)
 

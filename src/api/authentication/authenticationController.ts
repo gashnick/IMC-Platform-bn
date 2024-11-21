@@ -7,6 +7,7 @@ import { getHash } from "@/common/utils/bcrypt";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { StatusCodes } from "http-status-codes";
 import { NextFunction } from 'express';
+import { attachCookie, attachToken } from "@/common/utils/token";
 
 class AuthenticationController {
     public registerUser: RequestHandler = async (_req: Request, res: Response) => {
@@ -19,7 +20,11 @@ class AuthenticationController {
             password: hashedPassword
         }
 
+        
         const serviceResponse = await authenticationService.createUser(user);
+
+        // Attach token Cookies
+        attachCookie(serviceResponse?.responseObject?.id!, res)
       
         return handleServiceResponse(serviceResponse, res);
     };
@@ -27,26 +32,37 @@ class AuthenticationController {
     public loginUser: RequestHandler = async (req: Request, res: Response) => {
         const { email, password } = req.body;
         const serviceResponse = await authenticationService.creadentialLogin(email, password);
+
+        // Attach token Cookies
+        attachCookie(serviceResponse?.responseObject?.id!, res)
+
         return handleServiceResponse(serviceResponse, res);
     };
 
     public googleLogin: RequestHandler = async (req: Request, res: Response) => {
         try {
-            const serviceResponse =  ServiceResponse.success<User>("User Log IN successful!", req.user as User);
-            return handleServiceResponse(serviceResponse, res);
+            
+            attachCookie((req?.user as User).id!, res);
+
+            res.redirect(process.env.FRONTED_REDIRECT || "/")
         } catch (error) {
             return ServiceResponse.failure("User Login Failed!", StatusCodes.UNPROCESSABLE_ENTITY);
         }
     };
 
-    public googleLogout: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            req.logout(function(err) {
-                if (err) { return next(err); }
+    public userLogout: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+            res.cookie("auth_token",null,{
+                expires:new Date(Date.now()),
+                httpOnly:true
             });
-        } catch (error) {
-            return ServiceResponse.failure("User Login Failed!", StatusCodes.UNPROCESSABLE_ENTITY);
-        }
+
+            // req.logout(function(err) {
+            //     if (err) { return next(err); }
+            // });
+
+            const logoutService = await authenticationService.logoutUser();
+
+            return handleServiceResponse(logoutService, res);
     };
 }
 

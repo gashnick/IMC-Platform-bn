@@ -62,6 +62,14 @@ export class AuthenticationService {
             return ServiceResponse.failure("An error occurred while trying to login.", null, StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
+
+    async logoutUser():Promise<ServiceResponse<User | null>>{
+        try {
+            return ServiceResponse.success("User Logout successful!", null, StatusCodes.OK);
+        } catch (error) {
+            return ServiceResponse.failure("User Logout Failed!", null, StatusCodes.UNPROCESSABLE_ENTITY);
+        }
+    }
 }
 
 export const authenticationService = new AuthenticationService();
