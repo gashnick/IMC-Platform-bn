@@ -1,0 +1,50 @@
+model Product {
+    id             Int        @id @default(autoincrement())
+    name           String     @db.VarChar(100)
+    price          Decimal    @db.Decimal(10, 2)
+    description    String     
+    ratings        Decimal    @default(0) @db.Decimal(3, 2)
+    images         Image[]
+    category       Category
+    seller         String
+    stock          Int        @db.SmallInt
+    numberOfReviews Int       @default(0)
+    reviews        Review[]
+    userId         String     @db.Uuid
+    user           User       @relation(fields: [userId], references: [id])
+    createdAt      DateTime   @default(now())
+}
+
+model Image {
+    id             Int        @id @default(autoincrement())
+    productId      Int
+    product        Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+    public_id      String
+    url            String
+}
+
+model Review {
+    id             Int        @id @default(autoincrement())
+    productId      Int
+    product        Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+    name           String
+    user           User       @relation(fields: [userId], references: [id])
+    userId         String     @db.Uuid @unique
+    rating         Decimal    @db.Decimal(3, 2)
+    comment        String
+}
+
+enum Category {
+    Electronics
+    Cameras
+    Laptops
+    Accessories
+    Headphones
+    Food
+    Books
+    Clothes_Shoes
+    Beauty_Health
+    Sports
+    Outdoor
+    Home
+}

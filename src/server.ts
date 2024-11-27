@@ -1,20 +1,20 @@
 import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
+import compression from "compression";
 import { pino } from "pino";
 
 import { openAPIRouter } from "@/api-docs/openAPIRouter";
-import { authenticationRouters } from "@/api/authentication/authenticationRouters";
-import { userRouter } from "@/api/users/userRouter";
-import errorHandler from "@/common/middleware/errorHandler";
-import rateLimiter from "@/common/middleware/rateLimiter";
-import requestLogger from "@/common/middleware/requestLogger";
-import { env } from "@/common/utils/envConfig";
+import { authenticationRouters } from "@/routes/authentication/authenticationRouters";
+import { userRouter } from "@/routes/users/userRouter";
+import errorHandler from "@/middleware/errorHandler";
+import rateLimiter from "@/middleware/rateLimiter";
+import requestLogger from "@/middleware/requestLogger";
 import passport from "passport";
-import { jwtAuthMiddleware } from "@/common/middleware/passport";
+import { jwtAuthMiddleware } from "@/middleware/passport";
 import session from "express-session";
-import { googleAuthStrategy } from "@/common/middleware/passport";
 import cookieParser from "cookie-parser";
+import { googleAuthStrategy } from "./middleware/passport";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -25,9 +25,15 @@ app.set("trust proxy", true);
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: "http://localhost:5173", credentials: true })); //env.CORS_ORIGIN, credentials: true
+app.use(cors({ origin: ["http://localhost:5173", "http://localhost:8080"], credentials: true })); //env.CORS_ORIGIN, credentials: true
 app.use(helmet());
+app.use(compression());
 app.use(rateLimiter);
+
+// Convert bigInt to string
+app.set('json replacer', (key: string, value: any) => {
+    return typeof value === 'bigint' ? value.toString() : value;
+});
 
 // Configure session middleware
 app.use(cookieParser(process.env.SESSION_SECRET || ""))
@@ -59,6 +65,6 @@ app.use("/users", userRouter);
 app.use(openAPIRouter);
 
 // Error handlers
-// app.use(errorHandler());
+app.use(errorHandler());
 
 export { app, logger };
