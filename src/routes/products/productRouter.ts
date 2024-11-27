@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { createApiReqestBody, createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { GetUserSchema, UserSchema } from "@/routes/users/userModel";
-import { userController } from "./productController";
+import { productController } from "./productController";
 import passport from "passport";
 
 export const productRegistry = new OpenAPIRegistry();
@@ -31,7 +31,7 @@ productRegistry.registerPath({                                    //Swagger Docs
     security:[{ CookieAuth: [] }],
     responses: createApiResponse(z.array(UserSchema), "Success"),
 });
-productRouter.get("/", Authenticate, userController.getUsers);    // Product Route
+productRouter.get("/", productController.getProducts);    // Product Route
 
 
 //GET ONE
@@ -44,9 +44,9 @@ productRegistry.registerPath({
     request: { params: GetUserSchema.shape.params },
     responses: createApiResponse(UserSchema, "Success"),
 });
-productRouter.get("/:id", Authenticate, userController.getUser);
+productRouter.get("/:id", productController.getProduct);
 
-// UPDATE USER
+// UPDATE PRODUCT
 productRegistry.registerPath({
     method: "patch",
     path: "/products/{update_id}",
@@ -60,9 +60,9 @@ productRegistry.registerPath({
     responses: createApiResponse(UserSchema, "Success"),
 });
 
-productRouter.patch("/:update_id", Authenticate, userController.updateUser);
+productRouter.patch("/:update_id", Authenticate, productController.updateProduct);
 
-// DELETE USER
+// DELETE product
 productRegistry.registerPath({
     method: "delete",
     path: "/products/{delete_id}",
@@ -75,4 +75,4 @@ productRegistry.registerPath({
     responses: createApiResponse(UserSchema, "Success"),
 });
 
-productRouter.delete("/:delete_id", Authenticate, userController.deleteUser);
+productRouter.delete("/:delete_id", Authenticate, productController.deleteProduct);

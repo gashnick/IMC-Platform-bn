@@ -14,7 +14,8 @@ import passport from "passport";
 import { jwtAuthMiddleware } from "@/middleware/passport";
 import session from "express-session";
 import cookieParser from "cookie-parser";
-import { googleAuthStrategy } from "./middleware/passport";
+import { googleAuthStrategy } from "@/middleware/passport";
+import { productRouter } from "@/routes/products/productRouter";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -60,6 +61,7 @@ app.use(requestLogger);
 // Routes
 app.use("/", authenticationRouters);
 app.use("/users", userRouter);
+app.use("/products", productRouter)
 
 // Swagger UI
 app.use(openAPIRouter);

@@ -6,17 +6,24 @@ import { commonValidations } from "@/utils/commonValidation";
 
 extendZodWithOpenApi(z);
 
-export type User = z.infer<typeof UserSchema>;
+export type Product = z.infer<typeof ProductSchema>;
 
-export const UserSchema = z.object({
+export const ProductSchema = z.object({
     id: z.string().optional(),
     name: z.string(),
-    email: z.string().email(),
-    password: z.string().min(5, "Password must be at least 5 characters long").optional(),
-    createdAt: z.string().date().optional()
-}).openapi("User");
+    price: z.number(),
+    description: z.string(),    
+    ratings: z.number(),
+    category: z.string(),
+    seller: z.string(),
+    stock: z.number(),
+    numberOfReviews: z.number().optional(),
+    userId : z.string(),
+    createdAt: z.string().optional()
+}).openapi("Product");
+
 
 // Input Validation for 'GET users/:id' endpoint
-export const GetUserSchema = z.object({
+export const GetProductSchema = z.object({
     params: z.object({ id: commonValidations.id }),
 });

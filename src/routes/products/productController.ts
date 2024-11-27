@@ -1,96 +1,66 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
-import { User } from "./productModel";
 import { ServiceResponse } from "@/utils/serviceResponse";
 import { asyncCatch, ErrorHandler } from '../../middleware/errorHandler';
 import prisma from "@/utils/prisma";
 import { StatusCodes } from "http-status-codes";
+import { Product } from "@prisma/client";
 
-class UserController {
-    public getUsers: RequestHandler = asyncCatch(async (_req: Request, res: Response, next: NextFunction) => {
-        const users = await prisma.user.findMany({
-            select: {
-                name: true,
-                email: true,
-                createdAt: true,
-                id: true,
-            }
-        });
+class ProductController {
+    public getProducts: RequestHandler = asyncCatch(async (_req: Request, res: Response, next: NextFunction) => {
+        const products = await prisma.product.findMany({});
 
-        if (!users || users.length === 0) {
-            return next(ErrorHandler.NotFound("No Users found"));
+        if (!products || products.length === 0) {
+            return next(ErrorHandler.NotFound("No Products found"));
         }
 
-        return ServiceResponse.success<User[]>("List of All Users", users, res);
+        return ServiceResponse.success<Product[]>("List of All Products", products, res);
     });
 
-    public getUser: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+    public getProduct: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
         
         const id = req.params.id as string;
-        const user = await prisma.user.findUnique({ 
+
+        const product = await prisma.product.findUnique({ 
                 where: { id },
-                select: {
-                    name: true,
-                    email: true,
-                    createdAt: true,
-                    id: true,
-                }
             });
-        if (!user) {
-            return next(ErrorHandler.BadRequest("No user found with that ID"));
+        if (!product) {
+            return next(ErrorHandler.BadRequest("No product found with that ID"));
         }
         
-        return ServiceResponse.success<User>("User details fetched!", user, res);
+        return ServiceResponse.success<Product>("Product details fetched!", product, res);
     });
 
-    public getProfile: RequestHandler = async (req: Request, res: Response) => {
-        return ServiceResponse.success<User>(
-                "Retrieved User Profile", 
-                req.user as User, 
-                res
-        );
-    };
 
-    public updateUser: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+    public updateProduct: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
         const { update_id: id } = req.params;
 
-        const user = await prisma.user.update({ 
+        const product = await prisma.product.update({ 
             where: { id },
-            data: { ...req.body, password: undefined },
-            select: {
-                name: true,
-                email: true,
-                createdAt: true,
-                id: true,
-            }
+            data: { ...req.body },
         });
 
-        if (!user) {
-            return next(ErrorHandler.NotFound("No user found with that ID"));
+        if (!product) {
+            return next(ErrorHandler.NotFound("No product found with that ID"));
         }
         
-        return ServiceResponse.success<User>("User details fetched!", user, res);
+        return ServiceResponse.success<Product>("Product details fetched!", product, res);
     });
 
-    public deleteUser: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+    public deleteProduct: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
         const { delete_id } = req.params;
 
-        const user = await prisma.user.findUnique({ 
+        const product = await prisma.product.findUnique({ 
             where: { id: delete_id },
-            select: {
-                name: true,
-                email: true,
-                createdAt: true,
-                id: true,
-            }
         });
-        if (!user) {
-            return next(ErrorHandler.NotFound("No user found with that ID"));
+
+        if (!product) {
+            return next(ErrorHandler.NotFound("No product found with that ID"));
         }
 
-        await prisma.user.delete({ where: { id: delete_id }});
+        await prisma.product.delete({ where: { id: delete_id }});
         
-        return ServiceResponse.success("User Deleted Successful!", null, res, StatusCodes.OK);
+        return ServiceResponse.success("Product Deleted Successful!", null, res, StatusCodes.OK);
     });
 }
 
-export const userController = new UserController();
+export const productController = new ProductController();
