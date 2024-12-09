@@ -1,7 +1,7 @@
 model Product {
     id             String     @id @default(uuid())
     name           String     @db.VarChar(100)
-    price          Decimal    @db.Decimal(10, 2)
+    price          Decimal      @db.Decimal(10, 2)
     description    String     
     ratings        Decimal    @default(0) @db.Decimal(3, 2)
     images         Image[]

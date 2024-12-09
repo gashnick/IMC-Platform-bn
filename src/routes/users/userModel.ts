@@ -13,7 +13,7 @@ export const UserSchema = z.object({
     name: z.string(),
     email: z.string().email(),
     password: z.string().min(5, "Password must be at least 5 characters long").optional(),
-    createdAt: z.string().date().optional()
+    createdAt: z.date().optional()
 }).openapi("User");
 
 // Input Validation for 'GET users/:id' endpoint

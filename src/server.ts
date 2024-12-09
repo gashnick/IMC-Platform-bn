@@ -36,7 +36,7 @@ app.set('json replacer', (key: string, value: any) => {
     return typeof value === 'bigint' ? value.toString() : value;
 });
 
-// Configure session middleware
+// MIDDLEWARES SETUP
 app.use(cookieParser(process.env.SESSION_SECRET || ""))
 
 app.use(
@@ -50,12 +50,9 @@ app.use(
 app.use(passport.initialize())
 app.use(passport.session());
 
-//Set UP strategies
-jwtAuthMiddleware(passport)
+jwtAuthMiddleware(passport)           //Set UP strategies
 googleAuthStrategy(passport)
-
-// Request logging
-app.use(requestLogger);
+app.use(requestLogger);               // Request logging
 
 
 // Routes

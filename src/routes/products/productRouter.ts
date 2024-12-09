@@ -3,9 +3,10 @@ import express, { type Router } from "express";
 import { z } from "zod";
 
 import { createApiReqestBody, createApiResponse } from "@/api-docs/openAPIResponseBuilders";
-import { GetUserSchema, UserSchema } from "@/routes/users/userModel";
 import { productController } from "./productController";
 import passport from "passport";
+import { GetProductSchema, ProductSchema } from "./productModel";
+import { upload } from "@/middleware/imagesUpload";
 
 export const productRegistry = new OpenAPIRegistry();
 export const productRouter: Router = express.Router();
@@ -21,17 +22,28 @@ productRegistry.registerComponent(
     }
 );
 
-productRegistry.register("Product", UserSchema);
+productRegistry.register("Product", ProductSchema);
 
 //GET ALL
 productRegistry.registerPath({                                    //Swagger Docs
     method: "get",
     path: "/products",
     tags: ["Products"],
-    security:[{ CookieAuth: [] }],
-    responses: createApiResponse(z.array(UserSchema), "Success"),
+    responses: createApiResponse(z.array(ProductSchema), "Success"),
 });
 productRouter.get("/", productController.getProducts);    // Product Route
+
+//INSERT ONE
+productRegistry.registerPath({
+    method: "post",
+    path: "/products",
+    description: "This route is for inserting new product into database",
+    tags: ["Products"],
+    security:[{ CookieAuth: [] }],
+    request: { body: createApiReqestBody(ProductSchema.omit({ id: true, createdAt: true, user: true }), "multipart/form-data") },
+    responses: createApiResponse(ProductSchema, "Success"),
+});
+productRouter.post("/", Authenticate, upload.array("images"), productController.insertProduct);
 
 
 //GET ONE
@@ -40,9 +52,8 @@ productRegistry.registerPath({
     path: "/products/{id}",
     description: "This route is for getting product by ID",
     tags: ["Products"],
-    security:[{ CookieAuth: [] }],
-    request: { params: GetUserSchema.shape.params },
-    responses: createApiResponse(UserSchema, "Success"),
+    request: { params: GetProductSchema.shape.params },
+    responses: createApiResponse(ProductSchema, "Success"),
 });
 productRouter.get("/:id", productController.getProduct);
 
@@ -55,12 +66,12 @@ productRegistry.registerPath({
     security:[{ CookieAuth: [] }],
     request: { 
         params: z.object({ update_id: z.string() }),
-        body: createApiReqestBody(UserSchema.pick({ email: true, name: true }))
+        body: createApiReqestBody(ProductSchema.omit({ id: true, createdAt: true, user: true }), "multipart/form-data"),
     },
-    responses: createApiResponse(UserSchema, "Success"),
+    responses: createApiResponse(ProductSchema, "Success"),
 });
 
-productRouter.patch("/:update_id", Authenticate, productController.updateProduct);
+productRouter.patch("/:update_id", Authenticate,upload.array("images"), productController.updateProduct);
 
 // DELETE product
 productRegistry.registerPath({
@@ -72,7 +83,7 @@ productRegistry.registerPath({
     request: { 
         params: z.object({ delete_id: z.string() }),
     },
-    responses: createApiResponse(UserSchema, "Success"),
+    responses: createApiResponse(ProductSchema, "Success"),
 });
 
 productRouter.delete("/:delete_id", Authenticate, productController.deleteProduct);
