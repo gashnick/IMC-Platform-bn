@@ -8,11 +8,11 @@ import { StatusCodes } from "http-status-codes";
 import passport from "passport";
 import { z } from "zod";
 
-export const regiserRegistry = new OpenAPIRegistry();
+export const authenticationRegistry = new OpenAPIRegistry();
 export const authenticationRouters: Router = express.Router();
 
 //REGISTRACTION
-regiserRegistry.registerPath({
+authenticationRegistry.registerPath({
     method: "post",
     path: "/register",
     request: {
@@ -24,7 +24,7 @@ regiserRegistry.registerPath({
 authenticationRouters.post("/register",  aunthenticationController.registerUser);
 
 //LOGIN WITH CREDENTIALS
-regiserRegistry.registerPath({
+authenticationRegistry.registerPath({
     method: "post",
     path: "/credentials-login",
     description: `## After login, session-token will be automatically stored in your browser. You can use the following format to send it to request.
@@ -45,7 +45,7 @@ authenticationRouters.post("/credentials-login", aunthenticationController.login
 
 
 // LOGIN WITH GOOGLE
-regiserRegistry.registerPath({
+authenticationRegistry.registerPath({
     method: "get",
     path: "/google-login",
     description: "*Paste in browser: http://localhost:8080/google-login*",
@@ -59,7 +59,7 @@ authenticationRouters.get("/google-login", passport.authenticate("google", {
 }));
 
 
-regiserRegistry.registerPath({
+authenticationRegistry.registerPath({
     method: "get",
     path: "/auth/google/redirect",
     description: "*After Login with google response will come to this route*",
@@ -73,7 +73,7 @@ authenticationRouters.get("/auth/google/redirect",
 
 
 // HANDLE FORGOT PASSWORD
-regiserRegistry.registerPath({
+authenticationRegistry.registerPath({
     method: "post",
     path: "/forgot-password",
     tags: ["Authentication"],
@@ -86,7 +86,7 @@ regiserRegistry.registerPath({
 authenticationRouters.post("/forgot-password", aunthenticationController.forgotPassword);
 
 // HANDLE RESET PASSWORD
-regiserRegistry.registerPath({
+authenticationRegistry.registerPath({
     method: "post",
     path: "/reset-password/{resetCode}",
     tags: ["Authentication"],
@@ -101,7 +101,7 @@ authenticationRouters.post("/reset-password/:resetCode", aunthenticationControll
 
 
 // LOGOUT USER AND CLEAR COOKIES                                
-regiserRegistry.registerPath({
+authenticationRegistry.registerPath({
     method: "delete",
     path: "/logout",
     tags: ["Authentication"], 

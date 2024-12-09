@@ -1,9 +1,14 @@
-import { regiserRegistry } from "@/routes/authentication/authenticationRouters";
+import { authenticationRegistry } from "@/routes/authentication/authenticationRouters";
+import { productRegistry } from "@/routes/products/productRouter";
 import { userRegistry } from "@/routes/users/userRouter";
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
 
 export function generateOpenAPIDocument() {
-  const registry = new OpenAPIRegistry([regiserRegistry, userRegistry]);
+  const registry = new OpenAPIRegistry([
+        authenticationRegistry, 
+        userRegistry,
+        productRegistry
+    ]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 
   return generator.generateDocument({

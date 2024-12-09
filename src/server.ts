@@ -14,7 +14,8 @@ import passport from "passport";
 import { jwtAuthMiddleware } from "@/middleware/passport";
 import session from "express-session";
 import cookieParser from "cookie-parser";
-import { googleAuthStrategy } from "./middleware/passport";
+import { googleAuthStrategy } from "@/middleware/passport";
+import { productRouter } from "@/routes/products/productRouter";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -35,7 +36,7 @@ app.set('json replacer', (key: string, value: any) => {
     return typeof value === 'bigint' ? value.toString() : value;
 });
 
-// Configure session middleware
+// MIDDLEWARES SETUP
 app.use(cookieParser(process.env.SESSION_SECRET || ""))
 
 app.use(
@@ -49,17 +50,15 @@ app.use(
 app.use(passport.initialize())
 app.use(passport.session());
 
-//Set UP strategies
-jwtAuthMiddleware(passport)
+jwtAuthMiddleware(passport)           //Set UP strategies
 googleAuthStrategy(passport)
-
-// Request logging
-app.use(requestLogger);
+app.use(requestLogger);               // Request logging
 
 
 // Routes
 app.use("/", authenticationRouters);
 app.use("/users", userRouter);
+app.use("/products", productRouter)
 
 // Swagger UI
 app.use(openAPIRouter);

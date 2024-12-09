@@ -16,10 +16,10 @@ export function createApiResponse(schema: z.ZodTypeAny, description: string, sta
   };
 }
 
-export function createApiReqestBody(schema: z.ZodTypeAny) {
+export function createApiReqestBody(schema: z.ZodTypeAny, type: string= "application/json") {
     return {
         content: {
-            "application/json": {
+            [type]: {
                 schema: schema,
             },
         }
