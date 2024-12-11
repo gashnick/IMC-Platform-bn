@@ -24,6 +24,11 @@ export const CategoryEnum = z.enum([
     "Home",
 ]);
 
+export const ProductionTypeEnum = z.enum([
+    "Sell",
+    "Rent"
+])
+
 // Define a schema for uploaded files
 const UploadedFileSchema = z.object({
     file: z.instanceof(File), // Ensure that the field is a file object
@@ -49,11 +54,23 @@ export const ProductSchema = z.object({
     }).optional(),
 
     category: CategoryEnum,
+    productionType: ProductionTypeEnum,
+    location: z.string(),
     seller: z.string().openapi({ description: "Seller Name"}),
     stock: z.number().int().min(0).openapi({ description: "Product Quantity Available"}),
     user: z.string(),
     createdAt: z.date(),
 }).openapi("Product");
+
+export const ProductFilters = z.object({
+    'keyword':    z.string().optional().openapi({ description: "Product Name"}),
+    'price[gte]': z.number().min(1).optional(),
+    'price[lte]': z.number().min(1).optional(),
+    'ratings[gte]': z.number().min(1).optional(),
+    'category': CategoryEnum.optional(),
+    'productionType': ProductionTypeEnum.optional(),
+    'location': z.string().optional()
+})
 
 
 // Input Validation for 'GET users/:id' endpoint

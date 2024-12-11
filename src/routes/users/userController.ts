@@ -2,7 +2,7 @@ import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { User } from "./userModel";
 import { ServiceResponse } from "@/utils/serviceResponse";
 import { asyncCatch, ErrorHandler } from '../../middleware/errorHandler';
-import prisma from "@/utils/prisma";
+import prisma from "@/config/prisma";
 import { StatusCodes } from "http-status-codes";
 
 class UserController {

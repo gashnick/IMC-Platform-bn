@@ -11,6 +11,7 @@ model User {
     resetPasswordExpires BigInt?
     products             Product[]
     reviews              Review[]
+    carts                Cart[]
 }
 
 enum USER_TYPE {

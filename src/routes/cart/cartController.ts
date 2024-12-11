@@ -3,29 +3,52 @@ import { ServiceResponse } from "@/utils/serviceResponse";
 import { asyncCatch, ErrorHandler } from '../../middleware/errorHandler';
 import prisma from "@/config/prisma";
 import { StatusCodes } from "http-status-codes";
-import { Product, User } from "@prisma/client";
 import cloudinary from "@/middleware/imagesUpload";
-import FilterFeatures from "@/utils/filters";
+import { Cart, Product, User } from "@prisma/client";
 
-class ProductController {
-    public getProducts: RequestHandler = asyncCatch(async (_req: Request, res: Response, next: NextFunction) => {
-        const products = await prisma.product.findMany({
+class CartController {
+    public getCarts: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+        const carts = await prisma.cart.findMany({
+            where: {
+                userId: (req.user as User).id
+            },
             include: {
-                images: {
+                product: {
                     select: {
                         id: true,
-                        public_id: true,
-                        url: true
+                        name: true,
+                        description: true,
+                        category: true,
+                        location: true,
+                        price: true,
+                        numberOfReviews: true,
+                        productionType: true,
+                        stock: true,
+                        images: {
+                            select: {
+                                public_id: true,
+                                url: true
+                            }
+                        }
                     }
                 },
-            }
+                user: {
+                    select: {
+                        id: true,
+                        address: true,
+                        email: true,
+                        name: true,
+                        user_type: true
+                    }
+                }
+            }      
         });
 
-        if (!products || products.length === 0) {
-            return next(ErrorHandler.NotFound("No Products found"));
+        if (!carts || carts.length === 0) {
+            return next(ErrorHandler.NotFound("No Cart Items found"));
         }
 
-        return ServiceResponse.success<Product[]>("List of All Products", products, res);
+        return ServiceResponse.success<Cart[]>("List of All Carts Items for LoggedIn user.", carts, res);
     });
 
     public getProduct: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
@@ -42,44 +65,31 @@ class ProductController {
         return ServiceResponse.success<Product>("Product details fetched!", product, res);
     });
 
-    public insertProduct: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+    public addToCart: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
         
-        req.body.user = (req.user as User).id;
+        const userId = (req.user as User).id;
 
-        // Generate Links for product image
-        const imageLinks: { public_id: string; url: string }[] = [];
+        const { quantity, priceAtAddition, status, totalPrice } = req.body;
 
-        if (req.files) {
-            // Type guard to check if files is an array
-            const filesArray = Array.isArray(req.files) 
-                ? req.files 
-                : Object.values(req.files).flat();
-
-            for (const file of filesArray) {
-                const result = await cloudinary.v2.uploader.upload(file.path, {
-                    folder: "imc-platform"
-                });
-
-                imageLinks.push({
-                    public_id: result.public_id,
-                    url: result.secure_url
-                });
-            }
-        }
-
-        const product = await prisma.product.create({ data: { 
-                ...req.body, 
-                stock: Number(req.body.stock),
-                images: { create: imageLinks },
+        const cart = await prisma.cart.create({ data: { 
+                quantity,
+                priceAtAddition,
+                status,
+                totalPrice,
                 user: {
                     connect: {
-                        id: req.body.user
+                        id: userId
+                    }
+                },
+                product: {
+                    connect: {
+                        id: req.body.productId
                     }
                 }
             }  
         });
         
-        return ServiceResponse.success<Product>("Product Created Successful!", product, res);
+        return ServiceResponse.success<Cart>("Product Added to cart Successful!", cart, res);
     });
 
 
@@ -152,28 +162,6 @@ class ProductController {
         
         return ServiceResponse.success("Product Deleted Successful!", null, res, StatusCodes.OK);
     });
-
-    public filterProducts: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
-        const perPage = 8;
-        const productsCount = await prisma.product.count();
-
-        const apiFeatures = new FilterFeatures(prisma.product.findMany.bind(prisma.product), req.query as any)
-            .search()
-            .filter()
-            .pagination(perPage);
-
-        const products = await apiFeatures.execute();
-        
-        res.status(200).json({
-            success: true,
-            counts: products.length,
-            responseObject: products,
-            productsCount,
-            resultPerPage: perPage,
-            filteredProductsCount: products.length,
-        });
-        // return ServiceResponse.success("Product Deleted Successful!", null, res, StatusCodes.OK);
-    });
 }
 
-export const productController = new ProductController();
+export const cartController = new CartController();
