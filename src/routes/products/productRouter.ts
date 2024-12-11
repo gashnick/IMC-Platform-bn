@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createApiReqestBody, createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { productController } from "./productController";
 import passport from "passport";
-import { GetProductSchema, ProductSchema } from "./productModel";
+import { GetProductSchema, ProductFilters, ProductSchema } from "./productModel";
 import { upload } from "@/middleware/imagesUpload";
 
 export const productRegistry = new OpenAPIRegistry();
@@ -33,6 +33,34 @@ productRegistry.registerPath({                                    //Swagger Docs
 });
 productRouter.get("/", productController.getProducts);    // Product Route
 
+// FILTER products
+productRegistry.registerPath({
+    method: "get",
+    path: "/products/filter",
+    description: `# Building Query for this route
+    To build query for this route follow this guide lines
+       1. Know that none of the attributes are required.
+       2. When no filter is applied, route return all products
+       3. Separate each query param with '&'
+       4. Operators that could be used for fields with numbers like price or ratings: lte | gte | lt | gt where
+                . lte: Less than or equal
+                . gte: Greater than or equal
+                . lt : Less than
+                . gt : Greater than
+       5. 'Keyword' is used to refer to the 'name of the product'
+    
+    Example:
+    GET https://{backend-hostname}/products/filter?price[gte]=100&price[lte]=500&ratings[gte]=3&category=Cameras&productionType=Sell&location=Kigali
+    `,
+    request: {
+        query: ProductFilters
+    },
+    tags: ["Products"],
+    responses: createApiResponse(ProductSchema, "Success"),
+});
+
+productRouter.get("/filter", productController.filterProducts);
+
 //INSERT ONE
 productRegistry.registerPath({
     method: "post",
@@ -40,7 +68,9 @@ productRegistry.registerPath({
     description: "This route is for inserting new product into database",
     tags: ["Products"],
     security:[{ CookieAuth: [] }],
-    request: { body: createApiReqestBody(ProductSchema.omit({ id: true, createdAt: true, user: true }), "multipart/form-data") },
+    request: { 
+        body: createApiReqestBody(ProductSchema.omit({ id: true, createdAt: true, user: true }), "multipart/form-data") 
+    },
     responses: createApiResponse(ProductSchema, "Success"),
 });
 productRouter.post("/", Authenticate, upload.array("images"), productController.insertProduct);

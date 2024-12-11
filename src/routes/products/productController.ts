@@ -5,10 +5,15 @@ import prisma from "@/utils/prisma";
 import { StatusCodes } from "http-status-codes";
 import { Product, User } from "@prisma/client";
 import cloudinary from "@/middleware/imagesUpload";
+import FilterFeatures from "@/utils/filters";
 
 class ProductController {
     public getProducts: RequestHandler = asyncCatch(async (_req: Request, res: Response, next: NextFunction) => {
-        const products = await prisma.product.findMany({});
+        const products = await prisma.product.findMany({
+            include: {
+                images: true,
+            }
+        });
 
         if (!products || products.length === 0) {
             return next(ErrorHandler.NotFound("No Products found"));
@@ -140,6 +145,28 @@ class ProductController {
         await prisma.product.delete({ where: { id: delete_id }});
         
         return ServiceResponse.success("Product Deleted Successful!", null, res, StatusCodes.OK);
+    });
+
+    public filterProducts: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+        const perPage = 8;
+        const productsCount = await prisma.product.count();
+
+        const apiFeatures = new FilterFeatures(prisma.product.findMany.bind(prisma.product), req.query as any)
+            .search()
+            .filter()
+            .pagination(perPage);
+
+        const products = await apiFeatures.execute();
+        
+        res.status(200).json({
+            success: true,
+            counts: products.length,
+            responseObject: products,
+            productsCount,
+            resultPerPage: perPage,
+            filteredProductsCount: products.length,
+        });
+        // return ServiceResponse.success("Product Deleted Successful!", null, res, StatusCodes.OK);
     });
 }
 
