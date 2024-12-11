@@ -4,9 +4,6 @@ import helmet from "helmet";
 import compression from "compression";
 import { pino } from "pino";
 
-import { openAPIRouter } from "@/api-docs/openAPIRouter";
-import { authenticationRouters } from "@/routes/authentication/authenticationRouters";
-import { userRouter } from "@/routes/users/userRouter";
 import errorHandler from "@/middleware/errorHandler";
 import rateLimiter from "@/middleware/rateLimiter";
 import requestLogger from "@/middleware/requestLogger";
@@ -15,7 +12,15 @@ import { jwtAuthMiddleware } from "@/middleware/passport";
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import { googleAuthStrategy } from "@/middleware/passport";
+import PgSession from "connect-pg-simple";
+
+// Routers import
 import { productRouter } from "@/routes/products/productRouter";
+import { authenticationRouters } from "@/routes/authentication/authenticationRouters";
+import { openAPIRouter } from "@/api-docs/openAPIRouter";
+import { userRouter } from "@/routes/users/userRouter";
+import { cartRouter } from "@/routes/cart/cartRouter";
+import { env } from "@/config/envConfig";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -41,9 +46,17 @@ app.use(cookieParser(process.env.SESSION_SECRET || ""))
 
 app.use(
     session({
-      secret: process.env.SESSION_SECRET || "",
-      resave: false,
-      saveUninitialized: true,
+        store: new (PgSession(session))({
+            conString: env.DATABASE_URL_LOCAL,
+            createTableIfMissing:true
+        }),
+        secret: process.env.SESSION_SECRET || "",
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 1000 * 60 * 15 // 15 minutes
+        }
     })
 );
 
@@ -58,7 +71,8 @@ app.use(requestLogger);               // Request logging
 // Routes
 app.use("/", authenticationRouters);
 app.use("/users", userRouter);
-app.use("/products", productRouter)
+app.use("/products", productRouter);
+app.use("/carts", cartRouter);
 
 // Swagger UI
 app.use(openAPIRouter);

@@ -7,3 +7,24 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL_LOCAL")
 }
+
+
+enum Category {
+    Electronics
+    Cameras
+    Laptops
+    Accessories
+    Headphones
+    Food
+    Books
+    Clothes_Shoes
+    Beauty_Health
+    Sports
+    Outdoor
+    Home
+}
+
+enum ProductionTypeEnum {
+    Sell
+    Rent
+}

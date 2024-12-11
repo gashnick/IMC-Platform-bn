@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { NextFunction } from 'express';
 import { attachCookie, generateVerificationCode } from "@/utils/token";
 import { ServiceResponse } from "@/utils/serviceResponse";
-import prisma from "@/utils/prisma";
+import prisma from "@/config/prisma";
 import { asyncCatch, ErrorHandler } from '../../middleware/errorHandler';
 import { forgotPasswordEmailTemplate, sendEmail } from "@/utils/email";
 
@@ -44,12 +44,12 @@ class AuthenticationController {
             }
         });
 
-        if(!user)
+        if(!user || !user.password)
             return next(ErrorHandler.BadRequest("Invalid email or Password!"));
 
 
         // check if password match also
-        const isMatch = await comparePassword(password, user.password!);
+        const isMatch = await comparePassword(password, user.password);
         
         if(!isMatch)
             return next(ErrorHandler.BadRequest("Invalid email or Password!"));

@@ -10,7 +10,7 @@ model Product {
     stock          Int        @db.SmallInt
     numberOfReviews Int       @default(0)
     reviews        Review[]
-    carts          Cart[]
+    cartItems      Cart[]
     userId         String
     productionType ProductionTypeEnum
     location       String
@@ -35,31 +35,4 @@ model Review {
     userId         String
     rating         Decimal    @db.Decimal(3, 2)
     comment        String
-}
-
-model Cart {
-    id             Int        @id @default(autoincrement())
-    productId      String
-    product        Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-    quantity       Int
-}
-
-enum Category {
-    Electronics
-    Cameras
-    Laptops
-    Accessories
-    Headphones
-    Food
-    Books
-    Clothes_Shoes
-    Beauty_Health
-    Sports
-    Outdoor
-    Home
-}
-
-enum ProductionTypeEnum {
-    Sell
-    Rent
 }

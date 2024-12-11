@@ -1,7 +1,7 @@
 import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions, VerifyCallback } from "passport-jwt";
 import { Strategy as GoogleStrategy, StrategyOptions as GoogleOptions } from "passport-google-oauth20";
 import { PassportStatic } from "passport";
-import prisma from "@/utils/prisma";
+import prisma from "@/config/prisma";
 import { User } from "@prisma/client";
 import { logger } from "@/server";
 import { Request } from "express";
