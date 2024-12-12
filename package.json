@@ -18,7 +18,7 @@
         "format": "biome format src/",
         "test": "vitest run",
         "prepare": "husky",
-        "prisma": "npx prisma generate --schema=./src/models && npx prisma db push --schema=./src/models"
+        "preinstall": "npx prisma generate --schema=./src/models && npx prisma db push --schema=./src/models"
     },
     "prisma": {
         "schema": "src/models"
