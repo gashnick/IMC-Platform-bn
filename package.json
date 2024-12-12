@@ -20,9 +20,6 @@
         "prepare": "husky",
         "preinstall": "npx prisma generate --schema=./src/models && npx prisma db push --schema=./src/models"
     },
-    "prisma": {
-        "schema": "src/models"
-    },
     "dependencies": {
         "@asteasolutions/zod-to-openapi": "^7.0.0",
         "@types/compression": "^1.7.5",
