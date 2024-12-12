@@ -46,16 +46,16 @@ app.use(cookieParser(process.env.SESSION_SECRET || ""))
 
 app.use(
     session({
-        store: new (PgSession(session))({
-            conString: env.DATABASE_URL_LOCAL,
-            createTableIfMissing:true
-        }),
+        // store: new (PgSession(session))({
+        //     conString: env.DATABASE_URL_LOCAL,
+        //     createTableIfMissing:true
+        // }),
         secret: process.env.SESSION_SECRET || "",
         resave: false,
         saveUninitialized: true,
         cookie: {
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 1000 * 60 * 15 // 15 minutes
+            secure: env.NODE_ENV === "production",
+            maxAge: 1000 * 60 * 30 // 30 minutes
         }
     })
 );

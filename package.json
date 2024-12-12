@@ -9,7 +9,7 @@
     "private": true,
     "scripts": {
         "dev": "NODE_ENV=development & tsx watch --clear-screen=false src/index.ts | pino-pretty",
-        "prod": "NODE_ENV=production tsx watch --clear-screen=false src/index.ts | pino-pretty",
+        "prod": "NODE_ENV=production & node dist/index.js",
         "build": "tsup",
         "start": "node dist/index.js",
         "clean": "rimraf dist coverage",
@@ -19,6 +19,9 @@
         "test": "vitest run",
         "prepare": "husky",
         "prisma": "npx prisma generate --schema=./src/models && npx prisma db push --schema=./src/models"
+    },
+    "prisma": {
+        "schema": "src/models"
     },
     "dependencies": {
         "@asteasolutions/zod-to-openapi": "^7.0.0",
@@ -94,7 +97,8 @@
         "entry": [
             "src",
             "!src/**/__tests__/**",
-            "!src/**/*.test.*"
+            "!src/**/*.test.*",
+            "!src/**/*.prisma"
         ],
         "splitting": false,
         "sourcemap": true,
