@@ -46,10 +46,10 @@ app.use(cookieParser(process.env.SESSION_SECRET || ""))
 
 app.use(
     session({
-        store: new (PgSession(session))({
-            conString: env.DATABASE_URL_LOCAL,
-            createTableIfMissing:true
-        }),
+        // store: new (PgSession(session))({
+        //     conString: env.DATABASE_URL_LOCAL,
+        //     createTableIfMissing:true
+        // }),
         secret: process.env.SESSION_SECRET || "",
         resave: false,
         saveUninitialized: true,
