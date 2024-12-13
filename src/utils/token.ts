@@ -1,3 +1,4 @@
+import { env } from "@/config/envConfig";
 import { User } from "@/routes/users/userModel";
 import { Response } from "express";
 import jwt from "jsonwebtoken";
@@ -31,7 +32,7 @@ export const attachCookie = (userId: string, res: Response)=> {
 
     res.cookie('auth_token', token , {
         httpOnly: true,  // Prevents client-side JavaScript access
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        secure: env.NODE_ENV === 'production', // HTTPS only in production
         sameSite: 'strict', // Prevents CSRF
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
