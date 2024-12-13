@@ -2,7 +2,6 @@ model Cart {
     id              Int               @id @default(autoincrement())
     status          CartStatusEnum    @default(active)
     quantity        Int
-    totalPrice      Float             @default(0.0)
     priceAtAddition Float             @default(0.0)
     userId          String
     user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)

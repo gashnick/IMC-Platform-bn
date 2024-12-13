@@ -50,45 +50,33 @@ cartRegistry.registerPath({
 
 cartRouter.post("/", Authenticate, cartController.addToCart);
 
+// UPDATE CART QUANTITY
+cartRegistry.registerPath({
+    method: "patch",
+    path: "/carts/{update_id}",
+    description: "This route enable user to update cart quantity.",
+    tags: ["Carts"],
+    security:[{ CookieAuth: [] }],
+    request: { 
+        params: z.object({ update_id: z.number() }),
+        body: createApiReqestBody(CartSchema.pick({ quantity: true }), "application/json"),
+    },
+    responses: createApiResponse(CartSchema, "Success"),
+});
 
-// //GET ONE
-// cartRegistry.registerPath({
-//     method: "get",
-//     path: "/products/{id}",
-//     description: "This route is for getting product by ID",
-//     tags: ["Products"],
-//     request: { params: GetProductSchema.shape.params },
-//     responses: createApiResponse(ProductSchema, "Success"),
-// });
-// cartRouter.get("/:id", cartController.getProduct);
+cartRouter.patch("/:update_id", Authenticate, cartController.updateCartQuantity);
 
-// // UPDATE PRODUCT
-// cartRegistry.registerPath({
-//     method: "patch",
-//     path: "/products/{update_id}",
-//     description: "This route is for getting user by ID",
-//     tags: ["Products"],
-//     security:[{ CookieAuth: [] }],
-//     request: { 
-//         params: z.object({ update_id: z.string() }),
-//         body: createApiReqestBody(ProductSchema.omit({ id: true, createdAt: true, user: true }), "multipart/form-data"),
-//     },
-//     responses: createApiResponse(ProductSchema, "Success"),
-// });
+// DELETE product
+cartRegistry.registerPath({
+    method: "delete",
+    path: "/carts/{delete_id}",
+    description: "This route is for Deleting Cart item by ID",
+    tags: ["Carts"],
+    security:[{ CookieAuth: [] }],
+    request: { 
+        params: z.object({ delete_id: z.number() }),
+    },
+    responses: createApiResponse(CartSchema, "Success"),
+});
 
-// cartRouter.patch("/:update_id", Authenticate,upload.array("images"), cartController.updateProduct);
-
-// // DELETE product
-// cartRegistry.registerPath({
-//     method: "delete",
-//     path: "/products/{delete_id}",
-//     description: "This route is for Deleting Prodcut by ID",
-//     tags: ["Products"],
-//     security:[{ CookieAuth: [] }],
-//     request: { 
-//         params: z.object({ delete_id: z.string() }),
-//     },
-//     responses: createApiResponse(ProductSchema, "Success"),
-// });
-
-// cartRouter.delete("/:delete_id", Authenticate, cartController.deleteProduct);
+cartRouter.delete("/:delete_id", Authenticate, cartController.deleteCartItem);

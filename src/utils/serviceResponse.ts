@@ -16,9 +16,9 @@ export class ServiceResponse<T = null> {
     this.statusCode = statusCode;
   }
 
-  static success<T>(message: string, responseObject: T,res: Response, statusCode: number = StatusCodes.OK) {
+  static success<T>(message: string, responseObject: T,res: Response, statusCode: number = StatusCodes.OK, customFields:Record<string, string | number> = {}) {
     const serviceResponse = new ServiceResponse(true, message, responseObject, statusCode);
-    return ApiResponse(serviceResponse, res);
+    return ApiResponse({ ...customFields, ...serviceResponse}, res);
   }
 
   static failure<T>(message: string, responseObject: T, res: Response, statusCode: number = StatusCodes.BAD_REQUEST) {

@@ -3,8 +3,7 @@ import { ServiceResponse } from "@/utils/serviceResponse";
 import { asyncCatch, ErrorHandler } from '../../middleware/errorHandler';
 import prisma from "@/config/prisma";
 import { StatusCodes } from "http-status-codes";
-import cloudinary from "@/middleware/imagesUpload";
-import { Cart, Product, User } from "@prisma/client";
+import { Cart, User } from "@prisma/client";
 
 class CartController {
     public getCarts: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
@@ -48,28 +47,22 @@ class CartController {
             return next(ErrorHandler.NotFound("No Cart Items found"));
         }
 
-        return ServiceResponse.success<Cart[]>("List of All Carts Items for LoggedIn user.", carts, res);
+        const totalCost = carts.reduce((acc, cart)=> acc + ( cart["quantity"]* Number(cart["product"]["price"]) ), 0 );
+
+        return ServiceResponse.success<Cart[]>("List of All Carts Items for LoggedIn user.", carts, res, undefined, { totalCost });
     });
 
-    public getProduct: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
-        
-        const id = req.params.id as string;
-
-        const product = await prisma.product.findUnique({ 
-                where: { id },
-        });
-        if (!product) {
-            return next(ErrorHandler.BadRequest("No product found with that ID"));
-        }
-        
-        return ServiceResponse.success<Product>("Product details fetched!", product, res);
-    });
 
     public addToCart: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
         
         const userId = (req.user as User).id;
 
         const { quantity, priceAtAddition, status, totalPrice } = req.body;
+
+        // Validate Cart Quantity and Product Quantity
+        const product = await prisma.product.findUnique({ where: {id: req.body.productId }})
+        if(product && (Number(product["stock"] < quantity)))
+            return next(ErrorHandler.BadRequest("Cart Quantity can't exceed Product Stock!"));
 
         const cart = await prisma.cart.create({ data: { 
                 quantity,
@@ -93,74 +86,48 @@ class CartController {
     });
 
 
-    public updateProduct: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
-        const { update_id: id } = req.params;
+    public updateCartQuantity: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+        const id = Number(req.params.update_id);
         
-        const product = await prisma.product.findUnique({ 
+        const cart = await prisma.cart.findUnique({ 
             where: { id },
         });
 
-        if (!product) {
-            return next(ErrorHandler.BadRequest("No product found with that ID"));
+        if (!cart) {
+            return next(ErrorHandler.BadRequest("No cart found with that ID"));
         }
 
-        // Generate Links for product image
-        const imageLinks: { public_id: string; url: string }[] = [];
+        // Validate Cart Quantity and Product Quantity
+        const product = await prisma.product.findUnique({ where: {id: cart.productId }})
+        
+        if(product && (Number(product["stock"] < req.body.quantity )))
+            return next(ErrorHandler.BadRequest("Cart Quantity can't exceed Product Stock!"));
 
-        if (req.files) {
-            const images = await prisma.image.findMany({ where: { productId: id}})
-
-            for ( let image of images ){
-                // Delete Existing images from cloudinary
-                await cloudinary.v2.uploader.destroy(image.public_id)
-            }
-
-            // Delete existing images from database
-            await prisma.image.deleteMany({ where: { productId: id }})
-
-            // Type guard to check if files is an array
-            const filesArray = Array.isArray(req.files) 
-                ? req.files 
-                : Object.values(req.files).flat();
-
-            for (const file of filesArray) {
-                const result = await cloudinary.v2.uploader.upload(file.path, {
-                    folder: "imc-platform"
-                });
-
-                imageLinks.push({
-                    public_id: result.public_id,
-                    url: result.secure_url
-                });
-            }
-        }
-
-        const updateProduct = await prisma.product.update({ 
+        // Update quantity or status
+        const updatedCart = await prisma.cart.update({ 
             where: { id },
             data: { 
-                ...req.body, 
-                stock: Number(req.body.stock),
-                images: { create: imageLinks },
+                quantity: req.body.quantity
             },
         });
         
-        return ServiceResponse.success<Product>("Product Updated successful!", updateProduct, res);
+        return ServiceResponse.success<Cart>("Cart Quantity was Updated successful!", updatedCart, res);
     });
 
-    public deleteProduct: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
-        const { delete_id } = req.params;
+    public deleteCartItem: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+        const delete_id = Number(req.params.delete_id);
 
-        const product = await prisma.product.findUnique({ 
+        const cart = await prisma.cart.findUnique({ 
             where: { id: delete_id },
         });
 
-        if (!product) {
-            return next(ErrorHandler.NotFound("No product found with that ID"));
+        if (!cart) {
+            return next(ErrorHandler.NotFound("No cart item found with that ID"));
         }
 
-        await prisma.product.delete({ where: { id: delete_id }});
+        await prisma.cart.delete({ where: { id: delete_id }});
         
-        return ServiceResponse.success("Product Deleted Successful!", null, res, StatusCodes.OK);
+        return ServiceResponse.success("Cart Item was Deleted Successful!", null, res, StatusCodes.OK);
     });
 }
 
