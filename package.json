@@ -4,7 +4,6 @@
     "description": "An interface multiservice cooperation backend website",
     "author": "Bikorimana Saveur",
     "repository": "Interface-corporation/IMC-Platform-bn",
-    "license": "MIT",
     "main": "index.ts",
     "private": true,
     "scripts": {
@@ -17,8 +16,10 @@
         "lint:fix": "biome check src/ --fix",
         "format": "biome format src/",
         "test": "vitest run",
-        "prepare": "husky",
-        "preinstall": "npx prisma generate --schema=./src/models && npx prisma db push --schema=./src/models"
+        "prepare": "husky"
+    },
+    "prisma":{
+        "schema":"./src/models"
     },
     "dependencies": {
         "@asteasolutions/zod-to-openapi": "^7.0.0",

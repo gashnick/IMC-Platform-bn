@@ -16,14 +16,14 @@ export function createApiResponse(schema: z.ZodTypeAny, description: string, sta
   };
 }
 
-export function createApiReqestBody(schema: z.ZodTypeAny, type: string= "application/json") {
-    return {
-        content: {
-            [type]: {
-                schema: schema,
-            },
-        }
-    }
+export function createApiReqestBody(schema: z.ZodTypeAny, type = "application/json") {
+  return {
+    content: {
+      [type]: {
+        schema: schema,
+      },
+    },
+  };
 }
 
 // Use if you want multiple responses for a single endpoint
