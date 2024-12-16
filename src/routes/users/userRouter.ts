@@ -4,22 +4,18 @@ import { z } from "zod";
 
 import { createApiReqestBody, createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { GetUserSchema, UserSchema } from "@/routes/users/userModel";
-import { userController } from "./userController";
 import passport from "passport";
+import { userController } from "./userController";
 
 export const userRegistry = new OpenAPIRegistry();
 export const userRouter: Router = express.Router();
-const Authenticate = passport.authenticate(['jwt', 'google'], { session: false });
+const Authenticate = passport.authenticate(["jwt", "google"], { session: false });
 
-userRegistry.registerComponent(
-    'securitySchemes', 
-    'CookieAuth', 
-    {
-      type: 'apiKey',
-      in: 'cookie',
-      name: 'auth_token'
-    }
-);
+userRegistry.registerComponent("securitySchemes", "CookieAuth", {
+    type: "apiKey",
+    in: "cookie",
+    name: "auth_token",
+});
 
 userRegistry.register("User", UserSchema);
 
@@ -28,7 +24,7 @@ userRegistry.registerPath({
     method: "get",
     path: "/users",
     tags: ["Users"],
-    security:[{ CookieAuth: [] }],
+    security: [{ CookieAuth: [] }],
     responses: createApiResponse(z.array(UserSchema), "Success"),
 });
 
@@ -40,9 +36,9 @@ userRegistry.registerPath({
     path: "/users/profile",
     description: "*This route is for getting logged user profile information.*",
     tags: ["Users"],
-    security:[{ CookieAuth: [] }],
+    security: [{ CookieAuth: [] }],
     responses: createApiResponse(UserSchema, "Success"),
-});
+    });
 
 userRouter.get("/profile", Authenticate, userController.getProfile);
 
@@ -52,7 +48,7 @@ userRegistry.registerPath({
     path: "/users/{id}",
     description: "This route is for getting user by ID",
     tags: ["Users"],
-    security:[{ CookieAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: { params: GetUserSchema.shape.params },
     responses: createApiResponse(UserSchema, "Success"),
 });
@@ -64,10 +60,10 @@ userRegistry.registerPath({
     path: "/users/{update_id}",
     description: "This route is for getting user by ID",
     tags: ["Users"],
-    security:[{ CookieAuth: [] }],
-    request: { 
+    security: [{ CookieAuth: [] }],
+    request: {
         params: z.object({ update_id: z.string() }),
-        body: createApiReqestBody(UserSchema.pick({ email: true, name: true }))
+        body: createApiReqestBody(UserSchema.pick({ email: true, name: true })),
     },
     responses: createApiResponse(UserSchema, "Success"),
 });
@@ -80,8 +76,8 @@ userRegistry.registerPath({
     path: "/users/{delete_id}",
     description: "This route is for getting Deleting user by ID",
     tags: ["Users"],
-    security:[{ CookieAuth: [] }],
-    request: { 
+    security: [{ CookieAuth: [] }],
+    request: {
         params: z.object({ delete_id: z.string() }),
     },
     responses: createApiResponse(UserSchema, "Success"),

@@ -1,29 +1,28 @@
-import type { Request, RequestHandler, Response } from "express";
-import { User } from "../users/userModel";
-import { comparePassword, getHash } from "@/utils/bcrypt";
-import { StatusCodes } from "http-status-codes";
-import { NextFunction } from 'express';
-import { attachCookie, generateVerificationCode } from "@/utils/token";
-import { ServiceResponse } from "@/utils/serviceResponse";
 import prisma from "@/config/prisma";
-import { asyncCatch, ErrorHandler } from '../../middleware/errorHandler';
+import { comparePassword, getHash } from "@/utils/bcrypt";
 import { forgotPasswordEmailTemplate, sendEmail } from "@/utils/email";
+import { ServiceResponse } from "@/utils/serviceResponse";
+import { attachCookie, generateVerificationCode } from "@/utils/token";
+import type { Request, RequestHandler, Response } from "express";
+import type { NextFunction } from "express";
+import { StatusCodes } from "http-status-codes";
+import { ErrorHandler, asyncCatch } from "../../middleware/errorHandler";
+import type { User } from "../users/userModel";
 
 class AuthenticationController {
-
     public registerUser: RequestHandler = asyncCatch(async (_req: Request, res: Response) => {
         const hashedPassword = await getHash(_req.body.password);
-        const{ name, email} = _req.body;
+        const { name, email } = _req.body;
 
-        const user = await prisma.user.create({ 
+        const user = await prisma.user.create({
             data: { name, email, password: hashedPassword },
             select: {
                 id: true,
                 email: true,
                 name: true,
-                createdAt: true
-            }
-        })
+                createdAt: true,
+            },
+        });
 
         // Attach token Cookies
         attachCookie(user.id, res);
@@ -34,141 +33,130 @@ class AuthenticationController {
         const { email, password } = req.body;
 
         const user = await prisma.user.findUnique({
-            where: { email: email},
+            where: { email: email },
             select: {
                 id: true,
                 email: true,
                 name: true,
                 password: true,
-                createdAt: true
-            }
+                createdAt: true,
+            },
         });
 
-        if(!user || !user.password)
-            return next(ErrorHandler.BadRequest("Invalid email or Password!"));
-
+        if (!user || !user.password) return next(ErrorHandler.BadRequest("Invalid email or Password!"));
 
         // check if password match also
         const isMatch = await comparePassword(password, user.password);
-        
-        if(!isMatch)
-            return next(ErrorHandler.BadRequest("Invalid email or Password!"));
+
+        if (!isMatch) return next(ErrorHandler.BadRequest("Invalid email or Password!"));
 
         // Attach token Cookies
-        attachCookie(user.id!, res)
-        
-        return  ServiceResponse.success<User>(
-                "User Log IN successful!", 
-                { ...user,  password: undefined },
-                res
-        );
+        attachCookie(user.id!, res);
+
+        return ServiceResponse.success<User>("User Log IN successful!", { ...user, password: undefined }, res);
     });
 
-    public googleLogin: RequestHandler = asyncCatch( async (req: Request, res: Response) => {
-            
-            attachCookie((req?.user as User).id!, res);
+  public googleLogin: RequestHandler = asyncCatch(async (req: Request, res: Response) => {
+    attachCookie((req?.user as User).id!, res);
 
-            return res.redirect(process.env.FRONTED_REDIRECT || "/")
+    return res.redirect(process.env.FRONTED_REDIRECT || "/");
+  });
+
+  public userLogout: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+    res.cookie("auth_token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
     });
 
-    public userLogout: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
-        res.cookie("auth_token",null,{
-            expires:new Date(Date.now()),
-            httpOnly:true
-        });
+    return ServiceResponse.success("User Logout successful!", null, res);
+  };
 
-        return ServiceResponse.success("User Logout successful!", null, res);
-    };
+  public forgotPassword: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
 
-    public forgotPassword: RequestHandler = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
-        const { email } = req.body;
+    //getting user information
+    const user = await prisma.user.findUnique({ where: { email } });
 
-        //getting user information
-        const user = await prisma.user.findUnique({where: { email }});
+    if (!user) {
+      return next(ErrorHandler.NotFound("Provided User Email Doesn't match Any in Database"));
+    }
 
-        if(!user){
-            return next(ErrorHandler.NotFound("Provided User Email Doesn't match Any in Database"));
-        }
+    //Generate Reset Codes
+    const resetCode = generateVerificationCode();
 
-        //Generate Reset Codes
-        const resetCode = generateVerificationCode();
-        
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                resetPasswordCode: resetCode,
-                resetPasswordExpires: Date.now() + 30 * 60 * 1000,
-            }
-        });
-
-        const emailMessage = forgotPasswordEmailTemplate(user?.name, resetCode);
-        
-        try {
-            await sendEmail(
-                email as string,
-                "Password Recovery from IMC Ltd",
-                emailMessage,
-            );
-
-            return ServiceResponse.success(`Email sent to: ${ user?.name }`, null, res);
-        
-        } catch (error) {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: {
-                    resetPasswordCode: null,
-                    resetPasswordExpires: null,
-                }
-            });
-            return next(ErrorHandler.InternalServerError((error as Error)?.message || "Something went wrong while sending email!"));
-        }
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordCode: resetCode,
+        resetPasswordExpires: Date.now() + 30 * 60 * 1000,
+      },
     });
 
-    public resetPassword: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
-        const { password, confirmPassword } = req.body;
-        const { resetCode } = req.params;
+    const emailMessage = forgotPasswordEmailTemplate(user?.name, resetCode);
 
-        const user = await prisma.user.findFirst({
-            where: { 
-                resetPasswordCode: Number(resetCode),
-                resetPasswordExpires: { gt: Date.now() }
-            }
-        });
+    try {
+      await sendEmail(email as string, "Password Recovery from IMC Ltd", emailMessage);
 
-        if(!user){
-            return next(ErrorHandler.BadRequest("Password reset code is invalid or has expired"));
-        }
+      return ServiceResponse.success(`Email sent to: ${user?.name}`, null, res);
+    } catch (error) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetPasswordCode: null,
+          resetPasswordExpires: null,
+        },
+      });
+      return next(
+        ErrorHandler.InternalServerError((error as Error)?.message || "Something went wrong while sending email!"),
+      );
+    }
+  });
 
-        try {
+  public resetPassword: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const { password, confirmPassword } = req.body;
+    const { resetCode } = req.params;
 
-            if(password !== confirmPassword){
-                return next(ErrorHandler.BadRequest("Password does not match!"));
-            }
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordCode: Number(resetCode),
+        resetPasswordExpires: { gt: Date.now() },
+      },
+    });
 
-            const newPassword = await getHash(password);
+    if (!user) {
+      return next(ErrorHandler.BadRequest("Password reset code is invalid or has expired"));
+    }
 
-            await prisma.user.update({
-                where: { id: user.id },
-                data: {
-                    resetPasswordCode: null,
-                    resetPasswordExpires: null,
-                    password: newPassword
-                }
-            });
+    try {
+      if (password !== confirmPassword) {
+        return next(ErrorHandler.BadRequest("Password does not match!"));
+      }
 
-            return ServiceResponse.success(`Password Reset Successful you can login now`, null, res, StatusCodes.OK);
-        
-        } catch (error) {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: {
-                    resetPasswordCode: null,
-                    resetPasswordExpires: null,
-                }
-            });
-            return next(ErrorHandler.InternalServerError((error as Error)?.message || "Something went wrong while Reseting Password!"));
-        }
-    };
+      const newPassword = await getHash(password);
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetPasswordCode: null,
+          resetPasswordExpires: null,
+          password: newPassword,
+        },
+      });
+
+      return ServiceResponse.success("Password Reset Successful you can login now", null, res, StatusCodes.OK);
+    } catch (error) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetPasswordCode: null,
+          resetPasswordExpires: null,
+        },
+      });
+      return next(
+        ErrorHandler.InternalServerError((error as Error)?.message || "Something went wrong while Reseting Password!"),
+      );
+    }
+  };
 }
 
 export const aunthenticationController = new AuthenticationController();

@@ -5,12 +5,7 @@ import { userRegistry } from "@/routes/users/userRouter";
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
 
 export function generateOpenAPIDocument() {
-  const registry = new OpenAPIRegistry([
-        authenticationRegistry, 
-        userRegistry,
-        productRegistry,
-        cartRegistry
-    ]);
+  const registry = new OpenAPIRegistry([authenticationRegistry, userRegistry, productRegistry, cartRegistry]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 
   return generator.generateDocument({

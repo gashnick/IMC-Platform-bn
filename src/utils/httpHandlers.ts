@@ -9,12 +9,12 @@ export const ApiResponse = (serviceResponse: ServiceResponse<any>, response: Res
 };
 
 export const validateRequest = (schema: ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
-    try {
-        schema.parse({ body: req.body, query: req.query, params: req.params });
-        next();
-    } catch (err) {
-        const errorMessage = `Invalid input: ${(err as ZodError).errors.map((e) => e.message).join(", ")}`;
-        const statusCode = StatusCodes.BAD_REQUEST;
-        return ServiceResponse.failure(errorMessage, null, res, statusCode);
-    }
+  try {
+    schema.parse({ body: req.body, query: req.query, params: req.params });
+    next();
+  } catch (err) {
+    const errorMessage = `Invalid input: ${(err as ZodError).errors.map((e) => e.message).join(", ")}`;
+    const statusCode = StatusCodes.BAD_REQUEST;
+    return ServiceResponse.failure(errorMessage, null, res, statusCode);
+  }
 };
