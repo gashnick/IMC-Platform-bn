@@ -34,6 +34,11 @@ const returnErrorToUser: ErrorRequestHandler = (errors, _req, res, next) => {
       error = new ErrorHandler(message, 400);
     }
 
+    if(error.name === "PrismaClientKnownRequestError" && error.code == "P2002"){
+        const message = "Email already exists in database!";
+        error = new ErrorHandler(message, 400);
+    }
+
     if (error.message === "Could not decode base64") {
       const message = "Invalid Images uploaded. One Image shoud not exceed 1.2 mega bytes(MB)";
       error = new ErrorHandler(message, 400);
