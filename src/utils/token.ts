@@ -26,16 +26,15 @@ export const attachToken = (user: User) => {
 };
 
 export const attachCookie = (userId: string, res: Response) => {
-  // Create a secure, httpOnly token cookie
   //create jwt token
   const token = signToken(userId);
 
-  res.cookie("auth_token", token, {
-    httpOnly: true, // Prevents client-side JavaScript access
-    secure: env.NODE_ENV === "production", // HTTPS only in production
-    sameSite: "strict", // Prevents CSRF
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  });
+    res.cookie("auth_token", token, {
+        secure: true,
+        sameSite:'none',
+        httpOnly:true,
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
 };
 
 export function generateVerificationCode() {

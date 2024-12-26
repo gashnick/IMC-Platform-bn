@@ -88,11 +88,13 @@ class AuthenticationController {
       where: { id: user.id },
       data: {
         resetPasswordCode: resetCode,
-        resetPasswordExpires: Date.now() + 30 * 60 * 1000,
+        resetPasswordExpires: Date.now() + 15 * 60 * 1000,
       },
     });
 
-    const emailMessage = forgotPasswordEmailTemplate(user?.name, resetCode);
+    const resetLink = `${process.env.FRONTED_REDIRECT}/reset-password/${resetCode}`;
+
+    const emailMessage = forgotPasswordEmailTemplate(user?.name, resetLink);
 
     try {
       await sendEmail(email as string, "Password Recovery from IMC Ltd", emailMessage);

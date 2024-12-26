@@ -31,14 +31,19 @@ app.set("trust proxy", true);
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: ["http://localhost:5173", "http://localhost:8080"], credentials: true })); //env.CORS_ORIGIN, credentials: true
+
+app.use(cors({ 
+    origin: ["https://imc-platform.netlify.app", "http://localhost:3000", "https://deploy-preview-11--imc-platform.netlify.app"], 
+    credentials: true 
+}));
+
 app.use(helmet());
 app.use(compression());
 app.use(rateLimiter);
 
 // Convert bigInt to string
 app.set("json replacer", (key: string, value: any) => {
-  return typeof value === "bigint" ? value.toString() : value;
+    return typeof value === "bigint" ? value.toString() : value;
 });
 
 // MIDDLEWARES SETUP
