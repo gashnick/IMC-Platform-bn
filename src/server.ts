@@ -33,7 +33,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({ 
-    origin: env.CORS_ORIGIN, 
+    origin: ["https://imc-platform.netlify.app", "http://localhost:3000", "https://deploy-preview-11--imc-platform.netlify.app"], 
     credentials: true 
 }));
 
