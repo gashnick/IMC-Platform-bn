@@ -33,7 +33,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({ 
-    origin: env.CORS_ORIGIN, 
+    origin: ["http://localhost:3000", "https://imc.rw"],//env.CORS_ORIGIN, 
     credentials: true 
 }));
 
